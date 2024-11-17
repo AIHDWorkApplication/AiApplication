@@ -10,10 +10,6 @@ port=int(os.getenv('DB_PORT'))
 user=os.getenv('MARIADB_USER')
 password=str(os.getenv('MARIADB_PASSWORD'))
 database=os.getenv('DB_DATABASE')
-# print(f'SECRET_KEY: {host}')
-dsn = f"{user}:{password}@{host}:{port}/{database}?parseTime=true"
-# dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true"
-print(dsn)
 
 bucket_url=os.getenv('BUCKET_URL')
 
