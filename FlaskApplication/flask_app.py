@@ -2,25 +2,32 @@ from flask import Flask, redirect, render_template, Response,jsonify,request, se
 
 #FlaskForm--> it is required to receive input from the user
 # Whether uploading a video file  to our object detection model
-
+from dotenv import load_dotenv
 from flask_wtf import FlaskForm
-
+from flask_cors import CORS
 
 from wtforms import FileField, SubmitField,StringField,DecimalRangeField,IntegerRangeField
 from werkzeug.utils import secure_filename
 from wtforms.validators import InputRequired,NumberRange
 import os
 
-
+from storage import get_db_connection
 # Required to run the YOLOv8 model
 import cv2
-
 # YOLO_Video is the python file which contains the code for our object detection model
 #Video Detection is the Function which performs Object Detection on Input Video
-from yoloVid import video_detection
-app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'testName123'
+load_dotenv()
+
+app = Flask(__name__)
+CORS(app)
+
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('MARIA_DB_PATH')
+# print(os.getenv('MARIA_DB_PATH'))
+
+with app.app_context():
+    from yoloVid import video_detection
 # app.config['UPLOAD_FOLDER'] = 'static/files'
 is_running = False
 
@@ -29,7 +36,7 @@ class UploadFileForm(FlaskForm):
     #We store the uploaded video file path in the FileField in the variable file
     #We have added validators to make sure the user inputs the video in the valid format  and user does upload the
     #video when prompted to do so
-    file = FileField("File",validators=[InputRequired()])
+    file = FileField("File",validators=[InputRequired()]) 
     submit = SubmitField("Run")
 
 
@@ -56,6 +63,11 @@ def generate_frames_web(path_x, is_run):
 def home():
     session.clear()
     return render_template('home.html')
+
+@app.route('/gallery')
+def gallery():
+    session.clear()
+    return render_template('gallery.html')
 # Rendering the Webcam Rage
 #Now lets make a Webcam page for the application
 #Use 'app.route()' method, to render the Webcam page at "/webcam"
@@ -104,6 +116,30 @@ def toggle_webcam():
     session['is_running'] = not session.get('is_running', False)
     return redirect(url_for('webcam'))
 
+@app.route('/ping', methods=['GET'])
+def ping():
+    return jsonify({"message": "Pong!"})
+
+@app.route('/get_capture_image', methods=['GET'])
+def get_image():
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            # Execute a query to get all image data from the `footage` table
+            cur.execute("SELECT image_url, date FROM footage")
+            rows = cur.fetchall()  # Fetch all rows from the result
+
+            # Convert the result into a list of dictionaries
+            images = [{"image_url": row[0], "date": row[1]} for row in rows]
+
+            return jsonify(images), 200
+        except mariadb.Error as e:
+            return jsonify({"error": f"Failed to retrieve images: {e}"}), 500
+        finally:
+            conn.close()
+    else:
+        return jsonify({"error": "Failed to connect to the database."}), 500
 
 
 if __name__ == "__main__":
