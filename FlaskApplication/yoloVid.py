@@ -1,3 +1,4 @@
+import datetime
 from ultralytics import YOLO
 from storage import client, get_db_connection, bucket_url
 from flask import jsonify
@@ -53,7 +54,7 @@ def video_detection(path_x, is_running):
 cv2.destroyAllWindows()
 
 def saveDetectedImageToCloud (img, class_name):
-    timestamp = int(time.time())
+    timestamp = int(datetime.datetime.now().timestamp())
     filename = f'captured_image_{timestamp}.jpg'
     image_path = f'static/captured_image_{timestamp}.jpg'
     cv2.imwrite(image_path, img)
@@ -67,22 +68,13 @@ def saveDetectedImageToCloud (img, class_name):
     client.upload_fileobj(image_byte, bucket_name, object_key)
     # print(f'Image uploaded to R2 bucket: {bucket_name}/captured_image_{timestamp}.png')
 
-    saveImageUrlToDb(filename, timestamp)
+    saveImageUrlToDb(filename)
 
-def saveImageUrlToDb(filename, date):
+def saveImageUrlToDb(filename):
     conn = get_db_connection()
     if conn:
-        try:
             cur = conn.cursor()
             image_path=f'{bucket_url}/{filename}'
 
-            cur.execute("INSERT INTO footage (image_url, date) VALUES (?, ?)", (image_path, date))
+            cur.execute("INSERT INTO footage (image_url) VALUES (?)", (image_path,))
             conn.commit()
-
-            return jsonify({"message": "Database connection is successful!"}), 200
-        except mariadb.Error as e:
-            return jsonify({"error": f"Query execution failed: {e}"}), 500
-        finally:
-            conn.close()
-    else:
-        return jsonify({"error": "Failed to connect to the database."}), 500

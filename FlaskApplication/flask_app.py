@@ -24,7 +24,6 @@ app = Flask(__name__)
 CORS(app)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('MARIA_DB_PATH')
 # print(os.getenv('MARIA_DB_PATH'))
 
 with app.app_context():
