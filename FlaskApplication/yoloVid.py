@@ -37,7 +37,7 @@ def video_detection(path_x, is_running):
                 cv2.rectangle(img, (x1,y1), c2, [255,0,255], -1, cv2.LINE_AA)  # filled
                 cv2.putText(img, label, (x1,y1-2),0, 1,[255,255,255], thickness=1,lineType=cv2.LINE_AA)
 
-                if class_name == classNames[2]:
+                if class_name == classNames[1]:
                     saveDetectedImageToCloud(img, class_name)
 
         yield img
