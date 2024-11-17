@@ -112,7 +112,10 @@
     <button type="submit" id="toggleButton">
         {{ "Stop Webcam" if is_running else "Start Webcam" }}
     </button>
-</form>
+  </form>
+
+  <button id="testDb">Test database</button>
+  <p id="testDb"></p>
 
 <script>
     // Reload page on form submission to see the updated state of the webcam
@@ -122,6 +125,17 @@
         }, 100);  // Adjust delay as needed to wait for the toggle to process
         return true;
     };
+
+    document.getElementById('testDb').addEventListener('click', function() {
+        fetch('/test_db', {
+            method: 'GET'
+        })
+        .then(response => console.log(response.json()))
+        .catch(error => {
+            console.error('Error:', error.message);
+            document.getElementById('captureResponse').innerText = 'An error occurred';
+        });
+    });
 </script>
 </body>
 </html>
