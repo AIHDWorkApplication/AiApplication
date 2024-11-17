@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from flask_cors import CORS
 
+import mariadb
 from wtforms import FileField, SubmitField,StringField,DecimalRangeField,IntegerRangeField
 from werkzeug.utils import secure_filename
 from wtforms.validators import InputRequired,NumberRange
@@ -115,10 +116,6 @@ def toggle_webcam():
     # Toggle the 'is_running' value in the session
     session['is_running'] = not session.get('is_running', False)
     return redirect(url_for('webcam'))
-
-@app.route('/ping', methods=['GET'])
-def ping():
-    return jsonify({"message": "Pong!"})
 
 @app.route('/get_capture_image', methods=['GET'])
 def get_image():

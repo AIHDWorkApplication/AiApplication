@@ -5,6 +5,15 @@ import os
 import mariadb
 
 load_dotenv()
+host=os.getenv('DB_HOST')
+port=os.getenv('DB_PORT')
+user=os.getenv('MARIADB_USER')
+password=str(os.getenv('MARIADB_PASSWORD'))
+database=os.getenv('DB_DATABASE')
+print(f'SECRET_KEY: {host}')
+dsn = f"{user}:{password}@{host}:{port}/{database}?parseTime=true"
+# dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true"
+print(dsn)
 
 bucket_url=os.getenv('BUCKET_URL')
 
@@ -19,12 +28,13 @@ client = boto3.client(
 def get_db_connection():
     try:
         conn = mariadb.connect(
-            host=os.getenv('DB_HOST'),
-            port=int(os.getenv('DB_PORT')),  
-            user=os.getenv('MARIADB_USER'),
-            password=os.getenv('MARIADB_PASSWORD'),
-            database=os.getenv('DB_DATABASE')
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database,
         )
+        
         return conn
     except mariadb.Error as e:
         print(f"Error connecting to the database: {e}")
