@@ -1,8 +1,9 @@
 from ultralytics import YOLO
+from storage import client, get_db_connection, bucket_url
 import cv2
 import math
-
-
+import time
+import io
 
 def video_detection(path_x, is_running):
     video_capture = path_x
@@ -15,6 +16,7 @@ def video_detection(path_x, is_running):
     # model=YOLO("../RunningYolo/yolo11n.pt")
     model=YOLO("../RunningYolo/best.pt")
     classNames = ["helmet","no-helmet","rider"]
+
     while is_running is True:
         success, img = cap.read()
         results=model(img,stream=True)
@@ -35,6 +37,9 @@ def video_detection(path_x, is_running):
                 cv2.rectangle(img, (x1,y1), c2, [255,0,255], -1, cv2.LINE_AA)  # filled
                 cv2.putText(img, label, (x1,y1-2),0, 1,[255,255,255], thickness=1,lineType=cv2.LINE_AA)
 
+                if class_name == classNames[2]:
+                    saveDetectedImageToCloud(img, class_name)
+
         yield img
         #out.write(img)
         #cv2.imshow("image", img)
@@ -44,3 +49,38 @@ def video_detection(path_x, is_running):
     while is_running is False:
         cap.release()
 cv2.destroyAllWindows()
+
+def saveDetectedImageToCloud (img, class_name):
+    timestamp = int(time.time())
+    filename = f'captured_image_{timestamp}.jpg'
+    image_path = f'static/captured_image_{timestamp}.jpg'
+    cv2.imwrite(image_path, img)
+    # print(f"Image saved at {image_path} due to detection of class: {class_name}")
+
+    _, buffer = cv2.imencode('.png', img) 
+    image_byte = io.BytesIO(buffer)
+
+    bucket_name = 'aihelmetdetection'
+    object_key = f'captured_image_{timestamp}.png'
+    client.upload_fileobj(image_byte, bucket_name, object_key)
+    # print(f'Image uploaded to R2 bucket: {bucket_name}/captured_image_{timestamp}.png')
+
+    saveImageUrlToDb(filename, timestamp)
+
+def saveImageUrlToDb(filename, date):
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            image_path=f'{bucket_url}/{filename}'
+
+            cur.execute("INSERT INTO footage (image_url, date) VALUES (?, ?)", (image_path, date))
+            conn.commit()
+
+            return jsonify({"message": "Database connection is successful!"}), 200
+        except mariadb.Error as e:
+            return jsonify({"error": f"Query execution failed: {e}"}), 500
+        finally:
+            conn.close()
+    else:
+        return jsonify({"error": "Failed to connect to the database."}), 500
