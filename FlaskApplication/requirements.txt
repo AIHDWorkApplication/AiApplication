@@ -1,0 +1,11 @@
+Flask
+Flask-WTF
+Flask-CORS
+werkzeug
+mariadb
+wtforms
+cv2
+ultralytics
+boto3
+flask-sqlalchemy
+dotenv
