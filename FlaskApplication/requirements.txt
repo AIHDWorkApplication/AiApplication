@@ -4,7 +4,7 @@ Flask-CORS
 werkzeug
 mariadb
 wtforms
-cv2
+opencv-python
 ultralytics
 boto3
 flask-sqlalchemy
