@@ -1,0 +1,161 @@
+body{
+    font-family:Helvetica, sans-serif;
+    margin:0px;
+    padding:0px;
+    }
+    header.feature-box.right {
+    background: linear-gradient(135deg, #ff9e00, #ff6600); /* Gradient for depth */
+    color: white;
+    height: 80px;
+    padding: 15px 40px; /* Increased padding for more space */
+    text-align: center; /* Centering the header */
+    display: flex;
+    justify-content: flex-end; /* Spread out the links */
+    align-items: center; /* Align items vertically */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow for depth */
+    border-radius: 8px; /* Rounded corners for a softer look */
+    }   
+
+    header.feature-box.right nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: flex-end; /* Center the navigation links */
+    }
+
+    header.feature-box.right nav ul li {
+        margin: 0 20px;
+        text-transform: uppercase;
+        font-size: 18px;
+        font-weight: bold;
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    header.feature-box.right nav ul li a {
+        text-decoration: none;
+        color: white;
+        font-family: 'Roboto', sans-serif; /* Stylish modern font */
+        transition: color 0.3s ease;
+    }
+
+    header.feature-box.right nav ul li:hover {
+        transform: scale(1.1); /* Slight zoom effect on hover */
+    }
+
+    header.feature-box.right nav ul li a:hover {
+        color: #ff6600; /* Change link color on hover */
+    }
+
+    header.feature-box.right nav ul li a:active {
+        color: #e65800; /* Active state color */
+    }
+
+    ul{
+    list-style:none;
+    padding:0px;}
+            li {
+        text-decoration: none;
+        color: white;
+        display: inline-block;
+        background: linear-gradient(135deg, #ff9e00, #ff6600); /* Gradient background for a more dynamic look */
+        border-radius: 12px; /* Slightly larger border-radius for smoother curves */
+        padding: 12px 20px; /* Padding for better space and readability */
+        margin: 10px;
+        font-size: 16px; /* Increase font size for readability */
+        font-weight: 600; /* Bold text for emphasis */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+        transition: all 0.3s ease-in-out; /* Smooth transition for all effects */
+        cursor: pointer; /* Pointer cursor for better interaction */
+    }
+
+    li a {
+        text-decoration: none;
+        color: white;
+        font-size: inherit; /* Ensure link inherits font size from li */
+    }
+
+    li:hover {
+        background: linear-gradient(135deg, #ff7a00, #ff4500); /* Darker gradient on hover */
+        transform: scale(1.08); /* Slight zoom effect on hover */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* More prominent shadow for hover */
+    }
+
+    li:active {
+        background: linear-gradient(135deg, #cc6400, #cc5200); /* Even darker gradient on active (tap/click) */
+        transform: scale(0.98); /* Shrinks slightly when clicked */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Less shadow on active for pressed effect */
+    }
+    header a{
+    color:white;
+    text-decoration:none;
+    width:100%;
+    }
+    .details{
+    height:80px;
+    margin:40px;
+    padding:0px;
+    font-size:40px;
+    background-color:gray;
+    text-align:center;
+    color:black;
+    }
+
+
+    .features{
+    background:white;
+    color:gray;
+    display:flex;
+    flex-direction:row;
+    padding:20px;
+
+    }
+    .features figure
+    {/*background:pink;*/
+    width:400px;
+    margin:auto;
+    text-align:center;
+    text-transform:uppercase;
+    }
+    .features figure img{
+    border-radius:10%;
+    width:400px;
+    }
+    div.main{
+    display:flex;
+    margin:40px;
+    letter-spacing:1px;
+    h1, h2, h3, h4, h5, h6 {
+      font-family: "Playfair Display";
+    letter-spacing: 5px;
+    }
+    }
+    .subpart2{
+    text-align:center;
+    text-transform:uppercase;
+    }
+    .subpart2 figure img{
+    border-radius:4%;
+    width:800px;
+    }
+    .contactpage{
+    margin:20px;
+    }
+    #textbox {
+   font-size: 18pt;
+    height: 42px;
+    width : 1000px;
+    }
+    #textboxes {
+   font-size: 18pt;
+    height: 42px;
+    width : 1000px;
+    }
+    footer{
+    background-color:black;
+    text-align:center;
+    margin:0px;
+    padding:0px;
+    color:white;
+    font-size:20px;
+    }
