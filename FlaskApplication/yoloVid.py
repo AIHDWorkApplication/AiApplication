@@ -87,6 +87,7 @@ def video_detection(path_x, is_running, confidenceLv):
                     cv2.putText(img, "Riding with Helmet", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, COLOR_HELMET, 2)
                 elif no_helmet_detected:
                     cv2.putText(img, "Riding without Helmet", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, COLOR_NO_HELMET, 2)
+                    saveDetectedImageToCloud(img, "Rider without Helmet")
                 else:
                     cv2.putText(img, "Riding Status: Unknown", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
             else:
