@@ -36,6 +36,7 @@
             height: auto;
             border-radius: 15px;
             object-fit: cover;
+            cursor: pointer;
         }
         li {
             text-decoration: none;
@@ -54,6 +55,51 @@
             background-color: red;
             margin: 10px;
         }
+
+        /* Lightbox styling */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .lightbox.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 15px;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        .lightbox.visible img {
+            transform: scale(1);
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .close-btn:hover {
+            color: red;
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -66,8 +112,13 @@
 
 <section class="gallery" id="imageGallery">
     <!-- Images will be dynamically inserted here -->
-     
 </section>
+
+<!-- Lightbox for enlarged image -->
+<div class="lightbox" id="lightbox">
+    <span class="close-btn" id="closeBtn">&times;</span>
+    <img id="lightboxImage" src="" alt="Expanded view">
+</div>
 
 <script>
     // Fetch images from the /get_capture_image endpoint
@@ -88,6 +139,9 @@
                 const img = document.createElement('img');
                 img.src = image.image_url;
                 img.alt = `Captured on ${image.date}`;
+                img.addEventListener('click', () => {
+                    openLightbox(image.image_url);
+                });
 
                 const caption = document.createElement('p');
                 caption.innerText = `Captured on: ${image.date}`;
@@ -102,6 +156,30 @@
         console.error('Error:', error);
         document.getElementById('imageGallery').innerHTML = '<p style="color: red;">Failed to load images.</p>';
     });
+
+    // Lightbox functionality
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+    const closeBtn = document.getElementById('closeBtn');
+
+    function openLightbox(imageUrl) {
+        lightboxImage.src = imageUrl;
+        lightbox.classList.add('visible'); // Add the 'visible' class to make it appear
+    }
+
+    closeBtn.addEventListener('click', () => {
+        closeLightbox();
+    });
+
+    lightbox.addEventListener('click', (e) => {
+        if (e.target !== lightboxImage) {
+            closeLightbox();
+        }
+    });
+
+    function closeLightbox() {
+        lightbox.classList.remove('visible'); // Remove the 'visible' class to hide it
+    }
 </script>
 </body>
 </html>

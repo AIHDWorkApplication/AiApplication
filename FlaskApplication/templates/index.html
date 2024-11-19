@@ -103,39 +103,72 @@
      <h1><strong>Output Video</strong></h1>
 </header> -->
 
-  <section class="col-sm " >
-          
-    <img src="{{ url_for('webapp') }}" alt="Webcam Feed or Fallback Image">
-
-  </section>
-  <form method="post" action="{{ url_for('toggle_webcam') }}" id="toggleForm">
-    <button type="submit" id="toggleButton">
-        {{ "Stop Webcam" if is_running else "Start Webcam" }}
-    </button>
-  </form>
-
-  <button id="testDb">Test database</button>
-  <p id="testDb"></p>
+<section class="col-sm">
+  <img src="{{ url_for('webapp') }}" alt="Webcam Feed or Fallback Image">
+</section>
+<form method="post" action="{{ url_for('toggle_webcam') }}" id="toggleForm">
+  <button type="submit" id="toggleButton">
+      {{ "Stop Webcam" if is_running else "Start Webcam" }}
+  </button>
+  <label for="webcamSelect">Choose a webcam:</label>
+  <select name="webcam_id" id="webcamSelect">
+    <!-- Options will be dynamically populated -->
+  </select>
+</form>
 
 <script>
-    // Reload page on form submission to see the updated state of the webcam
-    document.getElementById('toggleForm').onsubmit = function() {
-        setTimeout(function() {
-            window.location.reload();
-        }, 100);  // Adjust delay as needed to wait for the toggle to process
-        return true;
-    };
+  // Reload page on form submission to see the updated state of the webcam
+  document.getElementById('toggleForm').onsubmit = function () {
+      setTimeout(function () {
+          window.location.reload();
+      }, 100); // Adjust delay as needed to wait for the toggle to process
+      return true;
+  };
 
-    document.getElementById('testDb').addEventListener('click', function() {
-        fetch('/test_db', {
-            method: 'GET'
-        })
-        .then(response => console.log(response.json()))
-        .catch(error => {
-            console.error('Error:', error.message);
-            document.getElementById('captureResponse').innerText = 'An error occurred';
-        });
-    });
+  // Fetch available webcams and populate the dropdown
+  fetch("{{ url_for('get_available_webcams') }}")
+      .then(response => response.json())
+      .then(webcams => {
+          const webcamSelect = document.getElementById("webcamSelect");
+          webcams.forEach(webcam => {
+              const option = document.createElement("option");
+              option.value = webcam.id;
+              option.textContent = webcam.name;
+              webcamSelect.appendChild(option);
+          });
+
+          // Automatically select the first webcam as the default
+          if (webcams.length > 0) {
+              webcamSelect.value = webcams[0].id;
+              updateWebcam(webcams[0].id);
+          }
+      })
+      .catch(error => console.error("Error fetching webcams:", error));
+
+  // Update webcam whenever a new one is selected
+  document.getElementById("webcamSelect").addEventListener("change", function () {
+      const selectedWebcamId = this.value;
+      updateWebcam(selectedWebcamId);
+  });
+
+  // Send the selected webcam ID to the server
+  function updateWebcam(webcamId) {
+      fetch("{{ url_for('set_selected_webcam') }}", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ webcam_id: webcamId })
+      })
+      .then(response => {
+          if (response.ok) {
+              console.log("Webcam updated successfully.");
+          } else {
+              console.error("Error updating webcam:", response.statusText);
+          }
+      })
+      .catch(error => console.error("Error updating webcam:", error));
+  }
 </script>
 </body>
 </html>

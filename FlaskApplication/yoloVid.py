@@ -1,5 +1,9 @@
+import datetime
+import threading
 from ultralytics import YOLO
 from storage import client, get_db_connection, bucket_url
+from flask import jsonify
+import mariadb
 import cv2
 import math
 import time
@@ -7,80 +11,126 @@ import io
 
 def video_detection(path_x, is_running):
     video_capture = path_x
-    #Create a Webcam Object
-    cap=cv2.VideoCapture(video_capture)
-    frame_width=int(cap.get(3))
-    frame_height=int(cap.get(4))
-    #out=cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P','G'), 10, (frame_width, frame_height))
+    cap = cv2.VideoCapture(video_capture)
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
 
-    # model=YOLO("../RunningYolo/yolo11n.pt")
-    model=YOLO("../RunningYolo/best.pt")
-    classNames = ["helmet","no-helmet","rider"]
+    model = YOLO("../YOLO-Weights/best.pt")  # Load the YOLO model
+    classNames = ["helmet", "no-helmet", "rider"]
 
-    while is_running is True:
+    # Class Names (Ensure they match your model's training classes)
+    CLASS_RIDER = "rider"
+    CLASS_HELMET = "helmet"
+    CLASS_NO_HELMET = "no-helmet"
+
+    # Define colors for each class
+    COLOR_RIDER = (0, 255, 255)    # Yellow for Rider
+    COLOR_HELMET = (0, 255, 0)     # Green for Helmet
+    COLOR_NO_HELMET = (0, 0, 255)  # Red for No Helmet
+
+    while is_running:
         success, img = cap.read()
-        results=model(img,stream=True)
+        if not success:
+            break
+
+        results = model(img, stream=True, conf=0.8)
+
+            # Extract detection information
+        # detections = results[0].boxes  # Get the bounding boxes and class info
+
+        # Variables to track rider and helmet status
+        is_rider_detected = False
+        helmet_detected = False
+        no_helmet_detected = False
+
         for r in results:
-            boxes=r.boxes
-            for box in boxes:
-                x1,y1,x2,y2=box.xyxy[0]
-                x1,y1,x2,y2=int(x1), int(y1), int(x2), int(y2)
-                print(x1,y1,x2,y2)
-                cv2.rectangle(img, (x1,y1), (x2,y2), (255,0,255),3)
-                conf=math.ceil((box.conf[0]*100))/100
-                cls=int(box.cls[0])
-                class_name=classNames[cls]
-                label=f'{class_name}{conf}'
-                t_size = cv2.getTextSize(label, 0, fontScale=1, thickness=2)[0]
-                print(t_size)
-                c2 = x1 + t_size[0], y1 - t_size[1] - 3
-                cv2.rectangle(img, (x1,y1), c2, [255,0,255], -1, cv2.LINE_AA)  # filled
-                cv2.putText(img, label, (x1,y1-2),0, 1,[255,255,255], thickness=1,lineType=cv2.LINE_AA)
+            detections = r.boxes
 
-                if class_name == classNames[1]:
-                    saveDetectedImageToCloud(img, class_name)
 
-        yield img
-        #out.write(img)
-        #cv2.imshow("image", img)
-        #if cv2.waitKey(1) & 0xFF==ord('1'):
-            #break
-    #out.release()
-    while is_running is False:
-        cap.release()
-cv2.destroyAllWindows()
+            for detection in detections:
+                    class_id = int(detection.cls)  # Class index
+                    class_name = model.names[class_id]  # Get class name from the model
+                    bbox = detection.xyxy[0].tolist()  # Get bounding box coordinates (x1, y1, x2, y2)
+                    confidence = detection.conf.tolist()[0]  # Detection confidence score
+                    print(f"Detected {class_name} with confidence {confidence} at {bbox}")  # Debug information
+                    x1, y1, x2, y2 = map(int, bbox)
 
-def saveDetectedImageToCloud (img, class_name):
-    timestamp = int(time.time())
-    filename = f'captured_image_{timestamp}.jpg'
-    image_path = f'static/captured_image_{timestamp}.jpg'
-    cv2.imwrite(image_path, img)
-    # print(f"Image saved at {image_path} due to detection of class: {class_name}")
 
-    _, buffer = cv2.imencode('.png', img) 
-    image_byte = io.BytesIO(buffer)
+                    # Check for rider
+                    if class_name == CLASS_RIDER:
+                        is_rider_detected = True
+                        label = "Rider"
+                        color = COLOR_RIDER
+                        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                        cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-    bucket_name = 'aihelmetdetection'
-    object_key = f'captured_image_{timestamp}.png'
-    client.upload_fileobj(image_byte, bucket_name, object_key)
-    # print(f'Image uploaded to R2 bucket: {bucket_name}/captured_image_{timestamp}.png')
+                    # Check for helmet
+                    elif class_name == CLASS_HELMET:
+                        helmet_detected = True
+                        label = "Helmet"
+                        color = COLOR_HELMET
+                        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                        cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-    saveImageUrlToDb(filename, timestamp)
+                    # Check for no helmet
+                    elif class_name == CLASS_NO_HELMET:
+                        no_helmet_detected = True
+                        label = "No-Helmet"
+                        color = COLOR_NO_HELMET
+                        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                        cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-def saveImageUrlToDb(filename, date):
+            # Check the conditions after processing all detections
+            if is_rider_detected:
+                if helmet_detected and not no_helmet_detected:
+                    cv2.putText(img, "Riding with Helmet", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, COLOR_HELMET, 2)
+                elif no_helmet_detected:
+                    cv2.putText(img, "Riding without Helmet", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, COLOR_NO_HELMET, 2)
+                else:
+                    cv2.putText(img, "Riding Status: Unknown", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            else:
+                cv2.putText(img, "No Rider Detected", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+                                #
+                            #  Optional: Log or save the detected image
+                            # saveDetectedImageToCloud(img, "Rider without Helmet")
+
+            yield img
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+
+def saveDetectedImageToCloud(img, class_name):
+    def async_upload_and_save():
+        try:
+            timestamp = int(datetime.datetime.now().timestamp())
+            filename = f'captured_image_{timestamp}.png'
+
+            # Encode the image to bytes
+            _, buffer = cv2.imencode('.png', img)
+            image_byte = io.BytesIO(buffer)
+
+            # Cloud bucket upload
+            bucket_name = 'aihelmetdetection'
+            object_key = f'captured_image_{timestamp}.png'
+            client.upload_fileobj(image_byte, bucket_name, object_key)
+
+            # Save the URL to the database
+            saveImageUrlToDb(filename)
+        except Exception as e:
+            print(f"Error in saving detected image: {e}")
+
+    # Run the function asynchronously
+    upload_thread = threading.Thread(target=async_upload_and_save)
+    upload_thread.start()
+
+def saveImageUrlToDb(filename):
     conn = get_db_connection()
     if conn:
-        try:
             cur = conn.cursor()
             image_path=f'{bucket_url}/{filename}'
 
-            cur.execute("INSERT INTO footage (image_url, date) VALUES (?, ?)", (image_path, date))
+            cur.execute("INSERT INTO footage (image_url) VALUES (?)", (image_path,))
             conn.commit()
-
-            return jsonify({"message": "Database connection is successful!"}), 200
-        except mariadb.Error as e:
-            return jsonify({"error": f"Query execution failed: {e}"}), 500
-        finally:
-            conn.close()
-    else:
-        return jsonify({"error": "Failed to connect to the database."}), 500

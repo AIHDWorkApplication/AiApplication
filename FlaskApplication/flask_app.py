@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from flask_cors import CORS
 
+import mariadb
 from wtforms import FileField, SubmitField,StringField,DecimalRangeField,IntegerRangeField
 from werkzeug.utils import secure_filename
 from wtforms.validators import InputRequired,NumberRange
@@ -23,7 +24,6 @@ app = Flask(__name__)
 CORS(app)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('MARIA_DB_PATH')
 # print(os.getenv('MARIA_DB_PATH'))
 
 with app.app_context():
@@ -101,12 +101,37 @@ def video():
 @app.route('/webapp')
 def webapp():
     is_running = session.get('is_running', False)
+    selected_webcam = session.get('selected_webcam', 0)  # Default to webcam 0
     if is_running:
-        # Generate frames if the camera is on
-        return Response(generate_frames_web(is_run=is_running, path_x=0), mimetype='multipart/x-mixed-replace; boundary=frame')
+        # Use the selected webcam index
+        return Response(generate_frames_web(is_run=is_running, path_x=selected_webcam), 
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
-        # Serve a static image if the camera is off
         return send_from_directory('static/images', 'camera-off.svg')
+
+
+@app.route('/set_selected_webcam', methods=['POST'])
+def set_selected_webcam():
+    data = request.get_json()
+    webcam_id = data.get("webcam_id")
+
+    if webcam_id is not None:
+        session['selected_webcam'] = int(webcam_id)
+        return jsonify({"message": "Webcam updated successfully"}), 200
+    else:
+        return jsonify({"error": "Invalid webcam ID"}), 400
+
+
+
+@app.route('/get_available_webcams', methods=['GET'])
+def get_available_webcams():
+    webcams = []
+    for i in range(5):  # Check the first 10 indices for connected webcams
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            webcams.append({"id": i, "name": f"Webcam {i}"})
+            cap.release()
+    return jsonify(webcams), 200
 
 
 
@@ -115,10 +140,6 @@ def toggle_webcam():
     # Toggle the 'is_running' value in the session
     session['is_running'] = not session.get('is_running', False)
     return redirect(url_for('webcam'))
-
-@app.route('/ping', methods=['GET'])
-def ping():
-    return jsonify({"message": "Pong!"})
 
 @app.route('/get_capture_image', methods=['GET'])
 def get_image():
