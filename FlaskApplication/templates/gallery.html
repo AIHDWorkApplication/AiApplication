@@ -68,9 +68,16 @@
     const closeBtn = document.getElementById('closeBtn');
 
     function openLightbox(imageUrl) {
-        lightboxImage.src = imageUrl;
+    const img = new Image();
+    img.onload = () => {
+        lightboxImage.style.width = `${img.width}px`; // Set original width
+        lightboxImage.style.height = `${img.height}px`; // Set original height
+        lightboxImage.src = imageUrl; // Set the image source
         lightbox.classList.add('visible'); // Add the 'visible' class to make it appear
+        };
+    img.src = imageUrl; // Preload the image to get its dimensions
     }
+
 
     closeBtn.addEventListener('click', () => {
         closeLightbox();
