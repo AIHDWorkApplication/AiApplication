@@ -5,7 +5,7 @@ body {
     background-color: black;
 }
 header.feature-box.top {
-    background-color: rgb(255, 170, 0);
+    background: linear-gradient(135deg, #ff9e00, #ff6600); /* Gradient for depth */
     height: 80px;
     padding: 20px;
     text-align: right;

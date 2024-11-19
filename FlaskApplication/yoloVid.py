@@ -34,6 +34,7 @@ def video_detection(path_x, is_running, confidenceLv):
             break
 
         results = model(img, stream=True, conf=confidenceLv)
+        
 
             # Extract detection information
         # detections = results[0].boxes  # Get the bounding boxes and class info
@@ -45,7 +46,7 @@ def video_detection(path_x, is_running, confidenceLv):
 
         for r in results:
             detections = r.boxes
-
+            
 
             for detection in detections:
                     class_id = int(detection.cls)  # Class index

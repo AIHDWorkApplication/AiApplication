@@ -8,16 +8,13 @@
     <title>Webcam</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
-<body>
-<header class="feature-box top">
+<header class="feature-box right">
   <nav>
     <li><a href="/home">back to home</a></li>
   </nav>
 </header>
-<!-- <header class="feature-box second">
-     <h1><strong>Output Video</strong></h1>
-</header> -->
 
+<body>
 <section class="col-sm">
   <img src="{{ url_for('webapp') }}" alt="Webcam Feed or Fallback Image">
 </section>
