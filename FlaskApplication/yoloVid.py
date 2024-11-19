@@ -9,7 +9,7 @@ import math
 import time
 import io
 
-def video_detection(path_x, is_running):
+def video_detection(path_x, is_running, confidenceLv):
     video_capture = path_x
     cap = cv2.VideoCapture(video_capture)
     frame_width = int(cap.get(3))
@@ -33,7 +33,7 @@ def video_detection(path_x, is_running):
         if not success:
             break
 
-        results = model(img, stream=True, conf=0.8)
+        results = model(img, stream=True, conf=confidenceLv)
 
             # Extract detection information
         # detections = results[0].boxes  # Get the bounding boxes and class info

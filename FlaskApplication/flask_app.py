@@ -49,8 +49,8 @@ def generate_frames(path_x = ''):
         yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + frame +b'\r\n')
 
-def generate_frames_web(path_x, is_run):
-    yolo_output = video_detection(path_x,is_run)
+def generate_frames_web(path_x, is_run,confidence_lv):
+    yolo_output = video_detection(path_x,is_run,confidenceLv=confidence_lv)
     for detection_ in yolo_output:
         ref,buffer=cv2.imencode('.jpg',detection_)
 
@@ -102,9 +102,10 @@ def video():
 def webapp():
     is_running = session.get('is_running', False)
     selected_webcam = session.get('selected_webcam', 0)  # Default to webcam 0
+    confidence_level = session.get('selected_conf_lv', 0.7)
     if is_running:
         # Use the selected webcam index
-        return Response(generate_frames_web(is_run=is_running, path_x=selected_webcam), 
+        return Response(generate_frames_web(is_run=is_running, path_x=selected_webcam,confidence_lv=confidence_level), 
                         mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
         return send_from_directory('static/images', 'camera-off.svg')
@@ -120,6 +121,26 @@ def set_selected_webcam():
         return jsonify({"message": "Webcam updated successfully"}), 200
     else:
         return jsonify({"error": "Invalid webcam ID"}), 400
+
+@app.route('/set_conf_lv', methods=['POST'])
+def set_conf_level():
+    data = request.get_json()
+    conf_lv = data.get("conf_lv")
+
+    if conf_lv is not None:
+        try:
+            session['selected_conf_lv'] = float(conf_lv)
+            return jsonify({"message": "Confidence level updated successfully"}), 200
+        except ValueError:
+            return jsonify({"error": "Invalid confidence level format"}), 400
+    else:
+        return jsonify({"error": "Confidence level not provided"}), 400
+
+
+@app.route('/get_all_conf_lv_available', methods=['GET'])
+def get_all_conf_lv_available():
+    conf_lv = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99]
+    return jsonify({"conf_lv": conf_lv}), 200
 
 
 
