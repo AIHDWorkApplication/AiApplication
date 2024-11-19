@@ -101,12 +101,37 @@ def video():
 @app.route('/webapp')
 def webapp():
     is_running = session.get('is_running', False)
+    selected_webcam = session.get('selected_webcam', 0)  # Default to webcam 0
     if is_running:
-        # Generate frames if the camera is on
-        return Response(generate_frames_web(is_run=is_running, path_x=0), mimetype='multipart/x-mixed-replace; boundary=frame')
+        # Use the selected webcam index
+        return Response(generate_frames_web(is_run=is_running, path_x=selected_webcam), 
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
-        # Serve a static image if the camera is off
         return send_from_directory('static/images', 'camera-off.svg')
+
+
+@app.route('/set_selected_webcam', methods=['POST'])
+def set_selected_webcam():
+    data = request.get_json()
+    webcam_id = data.get("webcam_id")
+
+    if webcam_id is not None:
+        session['selected_webcam'] = int(webcam_id)
+        return jsonify({"message": "Webcam updated successfully"}), 200
+    else:
+        return jsonify({"error": "Invalid webcam ID"}), 400
+
+
+
+@app.route('/get_available_webcams', methods=['GET'])
+def get_available_webcams():
+    webcams = []
+    for i in range(5):  # Check the first 10 indices for connected webcams
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            webcams.append({"id": i, "name": f"Webcam {i}"})
+            cap.release()
+    return jsonify(webcams), 200
 
 
 
